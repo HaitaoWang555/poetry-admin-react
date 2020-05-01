@@ -1,16 +1,9 @@
 export interface TableListItem {
-  key: number;
-  disabled?: boolean;
-  href: string;
-  avatar: string;
-  name: string;
-  owner: string;
-  desc: string;
-  callNo: number;
-  status: number;
-  updatedAt: Date;
-  createdAt: Date;
-  progress: number;
+  id: number;
+  title: string;
+  dynasty: string;
+  author: string;
+  content: string;
 }
 
 export interface TableListPagination {
@@ -32,4 +25,8 @@ export interface TableListParams {
   key?: number;
   pageSize?: number;
   currentPage?: number;
+}
+
+export interface TableListItemParams extends Partial<TableListItem> {
+
 }

@@ -1,13 +1,13 @@
 import { DownOutlined, PlusOutlined } from '@ant-design/icons';
-import { Button, Divider, Dropdown, Menu, message, Input } from 'antd';
+import { Button, Dropdown, Menu, message } from 'antd';
 import React, { useState, useRef } from 'react';
 import { PageHeaderWrapper } from '@ant-design/pro-layout';
 import ProTable, { ProColumns, ActionType } from '@ant-design/pro-table';
 import { SorterResult } from 'antd/es/table/interface';
 
 import CreateForm from './components/CreateForm';
-import UpdateForm, { FormValueType } from './components/UpdateForm';
-import { TableListItem } from './data.d';
+import UpdateForm from './components/UpdateForm';
+import { TableListItem, TableListItemParams } from './data.d';
 import { queryRule, updateRule, addRule, removeRule } from './service';
 
 /**
@@ -32,14 +32,10 @@ const handleAdd = async (fields: TableListItem) => {
  * 更新节点
  * @param fields
  */
-const handleUpdate = async (fields: FormValueType) => {
+const handleUpdate = async (fields: TableListItemParams) => {
   const hide = message.loading('正在配置');
   try {
-    await updateRule({
-      name: fields.name,
-      desc: fields.desc,
-      key: fields.key,
-    });
+    await updateRule(fields)
     hide();
 
     message.success('配置成功');
@@ -60,7 +56,7 @@ const handleRemove = async (selectedRows: TableListItem[]) => {
   if (!selectedRows) return true;
   try {
     await removeRule({
-      key: selectedRows.map((row) => row.key),
+      ids: selectedRows.map((row) => row.id),
     });
     hide();
     message.success('删除成功，即将刷新');
@@ -80,91 +76,65 @@ const TableList: React.FC<{}> = () => {
   const actionRef = useRef<ActionType>();
   const columns: ProColumns<TableListItem>[] = [
     {
-      title: '规则名称',
-      dataIndex: 'name',
-      rules: [
-        {
-          required: true,
-          message: '规则名称为必填项',
-        },
-      ],
+      title: '题目',
+      dataIndex: 'title',
+      width: 150,
+      rules: [{required: true,message: '题目为必填项',},],
     },
     {
-      title: '描述',
-      dataIndex: 'desc',
+      title: '朝代',
+      dataIndex: 'dynasty',
+      width: 80,
+      rules: [{required: true,message: '朝代为必填项',},],
+    },
+    {
+      title: '作者',
+      dataIndex: 'author',
+      width: 80,
+      rules: [{required: true,message: '作者为必填项',},],
+    },
+    {
+      title: '内容',
       valueType: 'textarea',
-    },
-    {
-      title: '服务调用次数',
-      dataIndex: 'callNo',
-      sorter: true,
-      hideInForm: true,
-      renderText: (val: string) => `${val} 万`,
-    },
-    {
-      title: '状态',
-      dataIndex: 'status',
-      hideInForm: true,
-      valueEnum: {
-        0: { text: '关闭', status: 'Default' },
-        1: { text: '运行中', status: 'Processing' },
-        2: { text: '已上线', status: 'Success' },
-        3: { text: '异常', status: 'Error' },
-      },
-    },
-    {
-      title: '上次调度时间',
-      dataIndex: 'updatedAt',
-      sorter: true,
-      valueType: 'dateTime',
-      hideInForm: true,
-      renderFormItem: (item, { defaultRender, ...rest }, form) => {
-        const status = form.getFieldValue('status');
-        if (`${status}` === '0') {
-          return false;
-        }
-        if (`${status}` === '3') {
-          return <Input {...rest} placeholder="请输入异常原因！" />;
-        }
-        return defaultRender(item);
-      },
+      dataIndex: 'content',
+      rules: [{required: true,message: '内容为必填项',},],
     },
     {
       title: '操作',
+      width: 80,
+      fixed: 'right',
       dataIndex: 'option',
       valueType: 'option',
       render: (_, record) => (
         <>
           <a
+            style={{padding: 0}}
             onClick={() => {
               handleUpdateModalVisible(true);
               setStepFormValues(record);
             }}
           >
-            配置
+            修改
           </a>
-          <Divider type="vertical" />
-          <a href="">订阅警报</a>
         </>
       ),
     },
   ];
 
   return (
-    <PageHeaderWrapper>
+    <PageHeaderWrapper title={false} >
       <ProTable<TableListItem>
-        headerTitle="查询表格"
+        headerTitle="诗词管理"
         actionRef={actionRef}
-        rowKey="key"
+        bordered
+        rowKey="id"
         onChange={(_, _filter, _sorter) => {
           const sorterResult = _sorter as SorterResult<TableListItem>;
           if (sorterResult.field) {
             setSorter(`${sorterResult.field}_${sorterResult.order}`);
           }
         }}
-        params={{
-          sorter,
-        }}
+        params={{sorter,}}
         toolBarRender={(action, { selectedRows }) => [
           <Button type="primary" onClick={() => handleModalVisible(true)}>
             <PlusOutlined /> 新建
@@ -182,7 +152,6 @@ const TableList: React.FC<{}> = () => {
                   selectedKeys={[]}
                 >
                   <Menu.Item key="remove">批量删除</Menu.Item>
-                  <Menu.Item key="approval">批量审批</Menu.Item>
                 </Menu>
               }
             >
@@ -192,17 +161,12 @@ const TableList: React.FC<{}> = () => {
             </Dropdown>
           ),
         ]}
-        tableAlertRender={({ selectedRowKeys, selectedRows }) => (
-          <div>
-            已选择 <a style={{ fontWeight: 600 }}>{selectedRowKeys.length}</a> 项&nbsp;&nbsp;
-            <span>
-              服务调用次数总计 {selectedRows.reduce((pre, item) => pre + item.callNo, 0)} 万
-            </span>
-          </div>
-        )}
+        tableAlertRender={() => false}
         request={(params) => queryRule(params)}
         columns={columns}
-        rowSelection={{}}
+        scroll={{ y: "calc(100vh - 445px)" }}
+        pagination={{ position: ['bottomCenter'] }}
+        rowSelection={{columnWidth: 60, fixed: true}}
       />
       <CreateForm onCancel={() => handleModalVisible(false)} modalVisible={createModalVisible}>
         <ProTable<TableListItem, TableListItem>

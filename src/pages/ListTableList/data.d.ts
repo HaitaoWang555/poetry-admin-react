@@ -18,13 +18,14 @@ export interface TableListData {
 }
 
 export interface TableListParams {
-  sorter?: string;
-  status?: string;
-  name?: string;
-  desc?: string;
-  key?: number;
+  title?: string;
+  dynasty?: string;
+  author?: string;
+  content?: string;
   pageSize?: number;
-  currentPage?: number;
+  pageNum?: number;
+  current?: number;
+  sorter?: string;
 }
 
 export interface TableListItemParams extends Partial<TableListItem> {

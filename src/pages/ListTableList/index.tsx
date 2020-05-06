@@ -3,11 +3,10 @@ import { Button, Dropdown, Menu, message } from 'antd';
 import React, { useState, useRef } from 'react';
 import { PageHeaderWrapper } from '@ant-design/pro-layout';
 import ProTable, { ProColumns, ActionType } from '@ant-design/pro-table';
-import { SorterResult } from 'antd/es/table/interface';
 
 import CreateForm from './components/CreateForm';
 import UpdateForm from './components/UpdateForm';
-import { TableListItem, TableListItemParams } from './data.d';
+import { TableListItem, TableListItemParams, TableListParams } from './data.d';
 import { queryRule, updateRule, addRule, removeRule } from './service';
 
 /**
@@ -69,7 +68,6 @@ const handleRemove = async (selectedRows: TableListItem[]) => {
 };
 
 const TableList: React.FC<{}> = () => {
-  const [sorter, setSorter] = useState<string>('');
   const [createModalVisible, handleModalVisible] = useState<boolean>(false);
   const [updateModalVisible, handleUpdateModalVisible] = useState<boolean>(false);
   const [stepFormValues, setStepFormValues] = useState({});
@@ -120,7 +118,15 @@ const TableList: React.FC<{}> = () => {
       ),
     },
   ];
-
+  const initData = async (params?: TableListParams) => {
+    const res = await queryRule(params)
+    return {
+      data: res.data.list,
+      page: res.data.pageNum,
+      success: true,
+      total: res.data.total,
+    }
+  }
   return (
     <PageHeaderWrapper title={false} >
       <ProTable<TableListItem>
@@ -128,13 +134,7 @@ const TableList: React.FC<{}> = () => {
         actionRef={actionRef}
         bordered
         rowKey="id"
-        onChange={(_, _filter, _sorter) => {
-          const sorterResult = _sorter as SorterResult<TableListItem>;
-          if (sorterResult.field) {
-            setSorter(`${sorterResult.field}_${sorterResult.order}`);
-          }
-        }}
-        params={{sorter,}}
+        params={{}}
         toolBarRender={(action, { selectedRows }) => [
           <Button type="primary" onClick={() => handleModalVisible(true)}>
             <PlusOutlined /> 新建
@@ -162,10 +162,10 @@ const TableList: React.FC<{}> = () => {
           ),
         ]}
         tableAlertRender={() => false}
-        request={(params) => queryRule(params)}
+        request={(params) => initData(params)}
         columns={columns}
         scroll={{ y: "calc(100vh - 445px)" }}
-        pagination={{ position: ['bottomCenter'] }}
+        pagination={{ position: ['bottomCenter'], showQuickJumper: true }}
         rowSelection={{columnWidth: 60, fixed: true}}
       />
       <CreateForm onCancel={() => handleModalVisible(false)} modalVisible={createModalVisible}>
